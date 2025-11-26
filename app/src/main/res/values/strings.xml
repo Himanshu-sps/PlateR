@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">PlateR</string>
+    <string name="skip">Skip</string>
+    <string name="plater">PlateR</string>
+    <string name="simple_way_to_find_tasty_recipe">Simple way to find Tasty Recipe</string>
+    <string name="start_cooking">Start Cooking</string>
+    <string name="next">Next</string>
 </resources>
