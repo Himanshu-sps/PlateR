@@ -63,7 +63,7 @@ fun PlateRNavGraph(
             OnboardingScreen(
                 onSkipClick = {
                     coroutineScope.launch {
-                        userPreferencesManager.setOnboardingCompleted(true)
+                        userPreferencesManager.setOnboardingCompleted(completed = true)
                     }
                     navController.navigate(ScreenRoutes.AuthScreenRoute) {
                         popUpTo<ScreenRoutes.OnboardingScreenRoute> { inclusive = true }

@@ -1,33 +1,27 @@
 package com.plater.android.core.datastore
 
-import android.content.Context
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
-private val Context.userPreferencesDataStore by preferencesDataStore(
-    name = "user_preferences"
-)
+/**
+ * Thin wrapper that exposes strongly-typed user preference queries while delegating
+ * the actual persistence work to [DataStoreManager].
+ */
+@Singleton
+class UserPreferencesManager @Inject constructor(
+    private val dataStoreManager: DataStoreManager
+) {
 
-class UserPreferencesManager(private val context: Context) {
-
-    private object PreferenceKeys {
-        val ONBOARDING_COMPLETED: Preferences.Key<Boolean> =
-            booleanPreferencesKey("onboarding_completed")
+    companion object {
+        private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
     }
 
     val hasCompletedOnboarding: Flow<Boolean> =
-        context.userPreferencesDataStore.data.map { preferences ->
-            preferences[PreferenceKeys.ONBOARDING_COMPLETED] ?: false
-        }
+        dataStoreManager.readBoolean(KEY_ONBOARDING_COMPLETED, defaultValue = false)
 
     suspend fun setOnboardingCompleted(completed: Boolean) {
-        context.userPreferencesDataStore.edit { preferences ->
-            preferences[PreferenceKeys.ONBOARDING_COMPLETED] = completed
-        }
+        dataStoreManager.writeBoolean(KEY_ONBOARDING_COMPLETED, completed)
     }
 }
 
