@@ -1,4 +1,4 @@
-package com.plater.android.ui.theme
+package com.plater.android.presentation.uiresources
 
 import androidx.compose.ui.graphics.Color
 

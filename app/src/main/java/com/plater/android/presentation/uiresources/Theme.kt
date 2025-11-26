@@ -1,4 +1,4 @@
-package com.plater.android.ui.theme
+package com.plater.android.presentation.uiresources
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -45,7 +45,7 @@ fun PlateRTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = plateRTypography(),
         content = content
     )
 }
