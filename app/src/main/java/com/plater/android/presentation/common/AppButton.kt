@@ -7,8 +7,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -18,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -38,14 +41,14 @@ fun AppButton(
     text: String? = null,
     type: ButtonType = ButtonType.Primary,
     leftIcon: ImageVector? = null,
-    rightIcon: ImageVector? = null,
+    rightIcon: Painter? = null,
     onlyIcon: ImageVector? = null,
     enabled: Boolean = true,
     iconSize: Dp = DimensUtils.dimenDp(R.dimen.size_16),
     primaryColor: Color = MaterialTheme.colorScheme.primary,
     cornerRadiusPercent: Int = 20,
     textStyle: TextStyle = MaterialTheme.typography.labelMedium.copy(
-        fontWeight = FontWeight.Companion.SemiBold
+        fontWeight = FontWeight.SemiBold
     ),
     onClick: () -> Unit = {}
 ) {
@@ -93,7 +96,10 @@ fun AppButton(
                 else Modifier.Companion
             )
             .clickable(enabled = enabled) { onClick() }
-            .padding(all = DimensUtils.dimenDp(R.dimen.size_6)),
+            .padding(
+                horizontal = DimensUtils.dimenDp(R.dimen.size_6),
+                vertical = DimensUtils.dimenDp(R.dimen.size_8),
+            ),
         contentAlignment = Alignment.Companion.Center
     ) {
 
@@ -120,6 +126,7 @@ fun AppButton(
                     tint = contentColor,
                     modifier = Modifier.Companion.size(iconSize)
                 )
+                Spacer(modifier = Modifier.width(DimensUtils.dimenDp(R.dimen.size_8)))
             }
 
             // TEXT
@@ -132,7 +139,6 @@ fun AppButton(
                 )
 
                 Text(
-                    modifier = Modifier.Companion.padding(horizontal = DimensUtils.dimenDp(R.dimen.size_2)),
                     text = text,
                     style = finalStyle
                 )
@@ -140,8 +146,10 @@ fun AppButton(
 
             // Right Icon
             if (rightIcon != null) {
+                Spacer(modifier = Modifier.width(DimensUtils.dimenDp(R.dimen.size_8)))
+
                 Icon(
-                    imageVector = rightIcon,
+                    painter = rightIcon,
                     contentDescription = null,
                     tint = contentColor,
                     modifier = Modifier.Companion.size(iconSize)

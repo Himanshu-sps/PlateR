@@ -12,4 +12,7 @@ sealed class ScreenRoutes {
 
     @Serializable
     data object AuthScreenRoute : ScreenRoutes()
+
+    @Serializable
+    data object HomeScreenRoute : ScreenRoutes()
 }
