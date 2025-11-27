@@ -7,27 +7,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -37,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -82,104 +74,92 @@ fun OnboardingScreen(
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { onboardingItems.size })
     val coroutineScope = rememberCoroutineScope()
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets.statusBars
-    ) { innerPadding ->
-
-        val navigationPadding = WindowInsets.navigationBars.asPaddingValues()
-        val rootModifier = modifier
+    Box(
+        modifier = modifier
             .fillMaxSize()
-            .padding(innerPadding)
-            .background(colorScheme.background)
-            .consumeWindowInsets(WindowInsets.navigationBars)
+            .background(colorScheme.background),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) { page ->
+            OnBoardItem(onboardingModel = onboardingItems[page])
+        }
+
         Box(
-            modifier = rootModifier,
-            contentAlignment = Alignment.TopCenter
+            modifier = Modifier
+                .padding(top = DimensUtils.dimenDp(R.dimen.size_16))
+                .align(Alignment.TopEnd)
         ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) { page ->
-                OnBoardItem(onboardingModel = onboardingItems[page])
-            }
-
-            Box(
-                modifier = Modifier
-                    .padding(DimensUtils.dimenDp(R.dimen.size_16))
-                    .align(Alignment.TopEnd)
-            ) {
-                AppButton(
-                    text = stringResource(R.string.skip),
-                    type = ButtonType.Text,
-                    rightIcon = Icons.Default.ChevronRight,
-                    textStyle = MaterialTheme.typography.labelSmall,
-                    onClick = {
-                        onSkipClick.invoke()
-                    }
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(DimensUtils.dimenDp(R.dimen.size_16))
-                    .padding(bottom = navigationPadding.calculateBottomPadding())
-                    .align(Alignment.BottomEnd),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-
-                //Indicator
-                Row(
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    repeat(onboardingItems.size) { index ->
-                        val isSelected = pagerState.currentPage == index
-                        Box(
-                            modifier = Modifier
-                                .padding(4.dp)
-                                .width(if (isSelected) 18.dp else 8.dp)
-                                .height(if (isSelected) 8.dp else 8.dp)
-                                .border(
-                                    width = DimensUtils.dimenDp(R.dimen.size_1),
-                                    color = colorScheme.primary,
-                                    shape = RoundedCornerShape(DimensUtils.dimenDp(R.dimen.size_8))
-                                )
-                                .background(
-                                    color = if (isSelected) colorScheme.tertiary else colorScheme.onPrimary,
-                                    shape = CircleShape
-                                )
-                        )
-                    }
+            AppButton(
+                text = stringResource(R.string.skip),
+                type = ButtonType.Text,
+                rightIcon = painterResource(R.drawable.ic_arrow_right),
+                textStyle = MaterialTheme.typography.labelSmall,
+                onClick = {
+                    onSkipClick.invoke()
                 }
+            )
+        }
 
-                val isLastPage = pagerState.currentPage == onboardingItems.lastIndex
-                val nextLabel =
-                    if (isLastPage) stringResource(R.string.start_cooking) else stringResource(
-                        R.string.next
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(DimensUtils.dimenDp(R.dimen.size_16))
+                .align(Alignment.BottomEnd),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+
+            //Indicator
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                repeat(onboardingItems.size) { index ->
+                    val isSelected = pagerState.currentPage == index
+                    Box(
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .width(if (isSelected) 18.dp else 8.dp)
+                            .height(if (isSelected) 8.dp else 8.dp)
+                            .border(
+                                width = DimensUtils.dimenDp(R.dimen.size_1),
+                                color = colorScheme.primary,
+                                shape = RoundedCornerShape(DimensUtils.dimenDp(R.dimen.size_8))
+                            )
+                            .background(
+                                color = if (isSelected) colorScheme.tertiary else colorScheme.onPrimary,
+                                shape = CircleShape
+                            )
                     )
+                }
+            }
 
-                AppButton(
-                    text = nextLabel,
-                    rightIcon = Icons.Default.ArrowForward,
-                    onClick = {
-                        coroutineScope.launch {
-                            if (isLastPage) {
-                                onSkipClick()
-                            } else {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                            }
+            val isLastPage = pagerState.currentPage == onboardingItems.lastIndex
+            val nextLabel =
+                if (isLastPage) stringResource(R.string.start_cooking) else stringResource(
+                    R.string.next
+                )
+
+            AppButton(
+                text = nextLabel,
+                rightIcon = painterResource(R.drawable.ic_arrow_right),
+                onClick = {
+                    coroutineScope.launch {
+                        if (isLastPage) {
+                            onSkipClick()
+                        } else {
+                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }
                     }
-                )
-            }
+                }
+            )
         }
     }
-
 }
 
 @Composable
@@ -188,11 +168,7 @@ fun OnBoardItem(
     onboardingModel: OnboardingModel
 ) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(
-                all = DimensUtils.dimenDp(R.dimen.size_8)
-            ),
+        modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

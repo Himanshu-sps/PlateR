@@ -5,4 +5,23 @@
     <string name="simple_way_to_find_tasty_recipe">Simple way to find Tasty Recipe</string>
     <string name="start_cooking">Start Cooking</string>
     <string name="next">Next</string>
+    <string name="hello">Hello</string>
+    <string name="welcome_back">Welcome Back!</string>
+    <string name="username">Username</string>
+    <string name="email">Email</string>
+    <string name="enter_username">Enter Username</string>
+    <string name="enter_email">Enter Email</string>
+    <string name="password">Password</string>
+    <string name="enter_password">Enter Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="error_username_required">Please enter your username</string>
+    <string name="error_email_required">Please enter your email</string>
+    <string name="error_email_invalid">Please enter a valid email</string>
+    <string name="error_password_required">Please enter your password</string>
+    <string name="error_username_invalid">Please enter a valid username</string>
+    <string name="something_went_wrong">Something went wrong</string>
+    <string name="unknown_error_occurred">Unknown error occurred</string>
+    <string name="login_success_message">Logged in successfully!</string>
+    <string name="home_welcome">You are logged in!</string>
+    <string name="logout">Logout</string>
 </resources>
