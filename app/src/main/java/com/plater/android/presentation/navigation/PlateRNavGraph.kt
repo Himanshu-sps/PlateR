@@ -11,10 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 import com.plater.android.core.datastore.UserPreferencesManager
 import com.plater.android.domain.models.AuthSession
 import com.plater.android.presentation.screens.auth.LoginScreen
-import com.plater.android.presentation.screens.home.HomeScreen
+import com.plater.android.presentation.screens.main.MainScreen
 import com.plater.android.presentation.screens.onboarding.OnboardingScreen
 import com.plater.android.presentation.screens.splash.SplashScreen
 import kotlinx.coroutines.delay
@@ -54,6 +55,7 @@ fun PlateRNavGraph(
         startDestination = ScreenRoutes.SplashScreenRoute,
         modifier = modifier
     ) {
+
         composable<ScreenRoutes.SplashScreenRoute> {
             SplashScreen()
 
@@ -63,8 +65,8 @@ fun PlateRNavGraph(
                 if (!navigationHandled.value && completed != null) {
                     delay(SPLASH_DELAY_MS)
                     val destination = when {
-                        session != null -> ScreenRoutes.HomeScreenRoute
-                        completed -> ScreenRoutes.AuthScreenRoute
+                        session != null -> ScreenRoutes.MainSubGraph.MainGraphRoute
+                        completed -> ScreenRoutes.AuthSubGraph.AuthGraphRoute
                         else -> ScreenRoutes.OnboardingScreenRoute
                     }
 
@@ -84,35 +86,35 @@ fun PlateRNavGraph(
                     coroutineScope.launch {
                         userPreferencesManager.setOnboardingCompleted(completed = true)
                     }
-                    navController.navigate(ScreenRoutes.AuthScreenRoute) {
+                    navController.navigate(ScreenRoutes.AuthSubGraph.AuthGraphRoute) {
                         popUpTo<ScreenRoutes.OnboardingScreenRoute> { inclusive = true }
                     }
                 }
             )
         }
 
-        composable<ScreenRoutes.AuthScreenRoute> {
-            LoginScreen(
-                onSignInSuccess = {
-                    navController.navigate(ScreenRoutes.HomeScreenRoute) {
-                        popUpTo<ScreenRoutes.AuthScreenRoute> { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        composable<ScreenRoutes.HomeScreenRoute> {
-            HomeScreen(
-                onLogoutClick = {
-                    coroutineScope.launch {
-                        userPreferencesManager.clearAuthSession()
-                        navController.navigate(ScreenRoutes.AuthScreenRoute) {
-                            popUpTo<ScreenRoutes.HomeScreenRoute> { inclusive = true }
+        navigation<ScreenRoutes.AuthSubGraph.AuthGraphRoute>(
+            startDestination = ScreenRoutes.AuthSubGraph.LoginScreenRoute
+        ) {
+            composable<ScreenRoutes.AuthSubGraph.LoginScreenRoute> {
+                LoginScreen(
+                    onSignInSuccess = {
+                        navController.navigate(ScreenRoutes.MainSubGraph.MainGraphRoute) {
+                            popUpTo<ScreenRoutes.AuthSubGraph.AuthGraphRoute> { inclusive = true }
                         }
                     }
-                }
-            )
+                )
+            }
         }
+
+        navigation<ScreenRoutes.MainSubGraph.MainGraphRoute>(
+            startDestination = ScreenRoutes.MainSubGraph.MainScreenRoute
+        ) {
+            composable<ScreenRoutes.MainSubGraph.MainScreenRoute> {
+                MainScreen()
+            }
+        }
+
     }
 }
 

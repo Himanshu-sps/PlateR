@@ -22,6 +22,8 @@
     <string name="something_went_wrong">Something went wrong</string>
     <string name="unknown_error_occurred">Unknown error occurred</string>
     <string name="login_success_message">Logged in successfully!</string>
-    <string name="home_welcome">You are logged in!</string>
     <string name="logout">Logout</string>
+    <string name="hello_x">Hello %1$s</string>
+    <string name="what_are_you_cooking_today">What are you cooking today?</string>
+    <string name="featured">Featured</string>
 </resources>
