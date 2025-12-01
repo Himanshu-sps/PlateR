@@ -111,7 +111,16 @@ fun PlateRNavGraph(
             startDestination = ScreenRoutes.MainSubGraph.MainScreenRoute
         ) {
             composable<ScreenRoutes.MainSubGraph.MainScreenRoute> {
-                MainScreen()
+                MainScreen(
+                    authSession = authSession,
+                    onLogout = {
+                        navController.navigate(ScreenRoutes.AuthSubGraph.AuthGraphRoute) {
+                            popUpTo<ScreenRoutes.MainSubGraph.MainGraphRoute> {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
             }
         }
 

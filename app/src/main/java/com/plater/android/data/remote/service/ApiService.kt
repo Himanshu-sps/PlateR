@@ -1,27 +1,21 @@
 package com.plater.android.data.remote.service
 
-import com.plater.android.data.remote.dto.request.LoginRequest
-import com.plater.android.data.remote.dto.request.RefreshTokenRequest
-import com.plater.android.data.remote.dto.response.RefreshTokenResponse
 import com.plater.android.data.remote.dto.response.UserDto
-import retrofit2.http.Body
-import retrofit2.http.POST
+import retrofit2.http.GET
 
 /**
- * Retrofit definitions for authentication endpoints.
+ * Retrofit definitions for authentication endpoints. It will use all apis with Bearer <TOKEN> headers
  */
 interface ApiService {
 
-    @POST("auth/login")
-    /**
-     * Exchanges credentials for an authenticated session payload.
-     */
-    suspend fun login(@Body loginRequest: LoginRequest): UserDto
+    companion object {
+        const val GET_CURRENT_USER_ENDPOINT = "auth/me"
+    }
 
-    @POST("auth/refresh")
     /**
-     * Refreshes the access token using a refresh token.
+     * Gets the current authenticated user's information.
      */
-    suspend fun refreshToken(@Body refreshTokenRequest: RefreshTokenRequest): RefreshTokenResponse
+    @GET(GET_CURRENT_USER_ENDPOINT)
+    suspend fun getCurrentUser(): UserDto
 
 }

@@ -1,219 +1,143 @@
 package com.plater.android.data.remote.interceptor
 
-import com.google.gson.Gson
 import com.plater.android.core.datastore.UserPreferencesManager
 import com.plater.android.data.remote.dto.request.RefreshTokenRequest
-import com.plater.android.data.remote.dto.response.RefreshTokenResponse
-import com.plater.android.domain.models.AuthSession
+import com.plater.android.data.remote.service.AuthService
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.Interceptor
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Body
-import retrofit2.http.POST
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import javax.inject.Singleton
 
-/**
- * Production-grade OkHttp interceptor that handles authentication and silent token refresh.
- *
- * Features:
- * - Automatically attaches access token to Authorization header
- * - Detects 401 Unauthorized responses
- * - Performs silent token refresh with mutex-based synchronization
- * - Retries original request with new token
- * - Clears tokens and forces logout on refresh failure
- */
-@Singleton
 class AuthInterceptor @Inject constructor(
     private val userPreferencesManager: UserPreferencesManager,
-    private val gson: Gson,
-    @javax.inject.Named("base_url") private val baseUrl: String
+    private val authService: AuthService
 ) : Interceptor {
 
     companion object {
         private const val AUTHORIZATION_HEADER = "Authorization"
         private const val BEARER_PREFIX = "Bearer "
-        private const val REFRESH_ENDPOINT = "auth/refresh"
+        private const val HTTP_UNAUTHORIZED = 401
+        private const val TOKEN_EXPIRY_MINS = 30
     }
 
-    // Global mutex to ensure only one refresh operation at a time
+    // Mutex to prevent multiple simultaneous refresh calls
     private val refreshMutex = Mutex()
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
-
-        // Skip token attachment for refresh endpoint to avoid infinite loops
-        if (originalRequest.url.encodedPath.contains(REFRESH_ENDPOINT)) {
-            return chain.proceed(originalRequest)
-        }
-
-        // Attach access token from Encrypted DataStore
         val accessToken = runBlocking {
             userPreferencesManager.getAccessTokenSync()
         }
 
-        val authenticatedRequest = if (!accessToken.isNullOrBlank()) {
-            originalRequest.newBuilder()
-                .header(AUTHORIZATION_HEADER, "$BEARER_PREFIX$accessToken")
-                .build()
-        } else {
-            originalRequest
-        }
+        // Execute request with current token
+        val request = buildRequestWithHeaderToken(originalRequest, accessToken)
+        val response = chain.proceed(request)
 
-        // Execute the request
-        val response = chain.proceed(authenticatedRequest)
-
-        // Check for 401 Unauthorized
-        if (response.code == 401) {
-            // Close the 401 response before retrying
+        // Handle 401 Unauthorized by refreshing token
+        if (response.code == HTTP_UNAUTHORIZED && accessToken != null) {
             response.close()
-
-            // Attempt silent token refresh
-            return handleTokenRefresh(chain, originalRequest)
+            return handleTokenRefresh(chain, originalRequest, accessToken)
         }
 
         return response
     }
 
     /**
-     * Handles token refresh with mutex-based synchronization.
-     * Only one refresh request is allowed at a time.
-     * Other requests wait for the mutex and then retry with the new token.
+     * Builds a request with the provided access token in the Authorization header.
+     */
+    private fun buildRequestWithHeaderToken(request: Request, token: String?): Request {
+        return if (token != null) {
+            request.newBuilder()
+                .header(AUTHORIZATION_HEADER, "$BEARER_PREFIX$token")
+                .build()
+        } else {
+            request
+        }
+    }
+
+    /**
+     * Handles token refresh when a 401 response is received.
+     * Uses Mutex to prevent multiple simultaneous refresh calls.
      */
     private fun handleTokenRefresh(
         chain: Interceptor.Chain,
-        originalRequest: Request
+        originalRequest: Request,
+        originalToken: String
     ): Response {
         return runBlocking {
-            // Acquire mutex lock - only one refresh at a time
             refreshMutex.withLock {
-                // Double-check: another thread might have refreshed while we waited
+                // Check if token was already refreshed by another thread
                 val currentToken = userPreferencesManager.getAccessTokenSync()
-                val retryRequest = if (!currentToken.isNullOrBlank()) {
-                    originalRequest.newBuilder()
-                        .header(AUTHORIZATION_HEADER, "$BEARER_PREFIX$currentToken")
-                        .build()
-                } else {
-                    originalRequest
+
+                // If token changed, retry with new token
+                if (currentToken != originalToken && currentToken != null) {
+                    return@withLock chain.proceed(
+                        buildRequestWithHeaderToken(
+                            originalRequest,
+                            currentToken
+                        )
+                    )
                 }
 
-                val retryResponse = chain.proceed(retryRequest)
-                if (retryResponse.code != 401) {
-                    return@withLock retryResponse
-                }
-
-                // Still 401, close the response and proceed with refresh
-                retryResponse.close()
+                // Try to refresh the token
                 val refreshToken = userPreferencesManager.getRefreshTokenSync()
 
-                if (refreshToken.isNullOrBlank()) {
-                    // No refresh token available, force logout
-                    userPreferencesManager.clearAuthSession()
+                if (refreshToken == null) {
+                    clearSession()
                     return@withLock createUnauthorizedResponse(originalRequest)
                 }
 
-                // Perform token refresh
-                val refreshResult = performTokenRefresh(refreshToken)
+                return@withLock try {
+                    val refreshResponse = authService.refreshToken(
+                        RefreshTokenRequest(
+                            refreshToken = refreshToken,
+                            expiresInMins = TOKEN_EXPIRY_MINS
+                        )
+                    )
 
-                if (refreshResult == null) {
-                    // Refresh failed, clear tokens and force logout
-                    userPreferencesManager.clearAuthSession()
-                    return@withLock createUnauthorizedResponse(originalRequest)
+                    // Update stored tokens
+                    userPreferencesManager.updateTokens(
+                        newAccessToken = refreshResponse.accessToken,
+                        newRefreshToken = refreshResponse.refreshToken
+                    )
+
+                    // Retry original request with new token
+                    chain.proceed(
+                        buildRequestWithHeaderToken(
+                            originalRequest,
+                            refreshResponse.accessToken
+                        )
+                    )
+                } catch (e: Exception) {
+                    clearSession()
+                    createUnauthorizedResponse(originalRequest)
                 }
-
-                // Save new tokens
-                val currentSession = userPreferencesManager.getAuthSessionSync()
-                val updatedSession = currentSession?.copy(
-                    accessToken = refreshResult.accessToken,
-                    refreshToken = refreshResult.refreshToken
-                ) ?: AuthSession(
-                    user = com.plater.android.domain.models.User(
-                        id = null,
-                        username = null,
-                        email = null,
-                        firstName = null,
-                        lastName = null,
-                        image = null,
-                        gender = null
-                    ),
-                    accessToken = refreshResult.accessToken,
-                    refreshToken = refreshResult.refreshToken
-                )
-
-                userPreferencesManager.saveAuthSession(updatedSession)
-
-                // Retry original request with new token
-                val newAuthenticatedRequest = originalRequest.newBuilder()
-                    .header(AUTHORIZATION_HEADER, "$BEARER_PREFIX${refreshResult.accessToken}")
-                    .build()
-
-                chain.proceed(newAuthenticatedRequest)
             }
         }
     }
 
     /**
-     * Performs the actual token refresh API call.
-     * Returns null on failure (network error or API error).
+     * Clears the auth session when token refresh fails.
      */
-    private suspend fun performTokenRefresh(refreshToken: String): RefreshTokenResponse? {
-        return try {
-            // Create a separate OkHttpClient for refresh to avoid interceptor loops
-            val refreshClient = OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .build()
-
-            val refreshRetrofit = Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .client(refreshClient)
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build()
-
-            val refreshService = refreshRetrofit.create(RefreshTokenService::class.java)
-            val refreshRequest = RefreshTokenRequest(refreshToken = refreshToken)
-
-            val response = refreshService.refreshToken(refreshRequest)
-            response
-        } catch (e: Exception) {
-            // Network error or API error - return null to trigger logout
-            null
+    private fun clearSession() {
+        runBlocking {
+            userPreferencesManager.clearAuthSession()
         }
     }
 
     /**
-     * Creates an unauthorized response when refresh fails.
+     * Creates an unauthorized response for failed token refresh.
      */
-    private fun createUnauthorizedResponse(originalRequest: Request): Response {
+    private fun createUnauthorizedResponse(request: Request): Response {
         return Response.Builder()
-            .request(originalRequest)
-            .protocol(Protocol.HTTP_1_1)
-            .code(401)
+            .request(request)
+            .protocol(okhttp3.Protocol.HTTP_1_1)
+            .code(HTTP_UNAUTHORIZED)
             .message("Unauthorized")
-            .body("Authentication failed".toResponseBody("text/plain".toMediaType()))
+            .body(okhttp3.ResponseBody.create(null, ""))
             .build()
     }
-
-    /**
-     * Internal Retrofit service interface for token refresh.
-     * This is separate from the main ApiService to avoid circular dependencies.
-     */
-    private interface RefreshTokenService {
-        @POST(REFRESH_ENDPOINT)
-        suspend fun refreshToken(
-            @Body request: RefreshTokenRequest
-        ): RefreshTokenResponse
-    }
 }
-

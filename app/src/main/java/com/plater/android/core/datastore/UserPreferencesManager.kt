@@ -78,5 +78,23 @@ class UserPreferencesManager @Inject constructor(
     fun getAuthSessionSync(): AuthSession? = runBlocking {
         authSession().first()
     }
+
+    /**
+     * Updates only the tokens in the existing auth session while preserving user data.
+     * This method is intended for use in interceptors when refreshing tokens.
+     *
+     * @param newAccessToken The new access token
+     * @param newRefreshToken The new refresh token
+     */
+    suspend fun updateTokens(newAccessToken: String, newRefreshToken: String) {
+        val currentSession = authSession().first()
+        if (currentSession != null) {
+            val updatedSession = currentSession.copy(
+                accessToken = newAccessToken,
+                refreshToken = newRefreshToken
+            )
+            saveAuthSession(updatedSession)
+        }
+    }
 }
 

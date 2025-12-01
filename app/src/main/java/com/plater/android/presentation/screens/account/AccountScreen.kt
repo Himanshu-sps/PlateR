@@ -17,10 +17,16 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +37,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.plater.android.R
 import com.plater.android.core.utils.DimensUtils
+import com.plater.android.presentation.common.AppButton
+import com.plater.android.presentation.common.ButtonType
+import kotlinx.coroutines.launch
 
 @Composable
 fun AccountScreen(
@@ -38,29 +47,57 @@ fun AccountScreen(
 ) {
     val userState by viewModel.userState.collectAsState()
     val user = userState?.user
+    val currentUser by viewModel.currentUser.collectAsState()
+    val isLoadingUser by viewModel.isLoadingUser.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(
-                horizontal = DimensUtils.dimenDp(R.dimen.size_16),
-                vertical = DimensUtils.dimenDp(R.dimen.size_24)
-            ),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Start
-    ) {
-        Text(
-            text = "Account",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+    // Snackbar setup for showing error messages
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
-        Spacer(modifier = Modifier.height(DimensUtils.dimenDp(R.dimen.size_24)))
+    // Observe viewEffects and show snackbar when error occurs
+    LaunchedEffect(Unit) {
+        viewModel.viewEffects.collect { errorMessage ->
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    message = errorMessage,
+                    duration = androidx.compose.material3.SnackbarDuration.Short
+                )
+            }
+        }
+    }
 
-        if (user != null) {
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        }
+    ) { paddingValues ->
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    horizontal = DimensUtils.dimenDp(R.dimen.size_16),
+                    vertical = DimensUtils.dimenDp(R.dimen.size_24)
+                ),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = "Account",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(DimensUtils.dimenDp(R.dimen.size_24)))
+
+            // Use currentUser if available, otherwise fallback to userState
+            val displayUser = currentUser ?: user
+
+            if (displayUser != null) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -79,9 +116,9 @@ fun AccountScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(DimensUtils.dimenDp(R.dimen.size_16))
                     ) {
-                        if (!user.image.isNullOrEmpty()) {
+                        if (!displayUser.image.isNullOrEmpty()) {
                             AsyncImage(
-                                model = user.image,
+                                model = displayUser.image,
                                 contentDescription = "Profile Picture",
                                 modifier = Modifier
                                     .size(80.dp)
@@ -103,13 +140,13 @@ fun AccountScreen(
 
                         Column {
                             val fullName = buildString {
-                                if (!user.firstName.isNullOrEmpty()) append(user.firstName)
-                                if (!user.lastName.isNullOrEmpty()) {
+                                if (!displayUser.firstName.isNullOrEmpty()) append(displayUser.firstName)
+                                if (!displayUser.lastName.isNullOrEmpty()) {
                                     if (isNotEmpty()) append(" ")
-                                    append(user.lastName)
+                                    append(displayUser.lastName)
                                 }
-                                if (isEmpty() && !user.username.isNullOrEmpty()) {
-                                    append(user.username)
+                                if (isEmpty() && !displayUser.username.isNullOrEmpty()) {
+                                    append(displayUser.username)
                                 }
                             }
 
@@ -122,9 +159,9 @@ fun AccountScreen(
                                 )
                             }
 
-                            if (!user.username.isNullOrEmpty() && user.firstName?.isNotEmpty() == true) {
+                            if (!displayUser.username.isNullOrEmpty() && displayUser.firstName?.isNotEmpty() == true) {
                                 Text(
-                                    text = "@${user.username}",
+                                    text = "@${displayUser.username}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -138,48 +175,68 @@ fun AccountScreen(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(DimensUtils.dimenDp(R.dimen.size_12))
                     ) {
-                        if (!user.email.isNullOrEmpty()) {
+                        if (!displayUser.email.isNullOrEmpty()) {
                             UserInfoRow(
                                 label = stringResource(R.string.email),
-                                value = user.email
+                                value = displayUser.email
                             )
                         }
 
-                        if (!user.username.isNullOrEmpty()) {
+                        if (!displayUser.username.isNullOrEmpty()) {
                             UserInfoRow(
                                 label = stringResource(R.string.username),
-                                value = user.username
+                                value = displayUser.username
                             )
                         }
 
-                        if (!user.firstName.isNullOrEmpty()) {
+                        if (!displayUser.firstName.isNullOrEmpty()) {
                             UserInfoRow(
                                 label = "First Name",
-                                value = user.firstName
+                                value = displayUser.firstName
                             )
                         }
 
-                        if (!user.lastName.isNullOrEmpty()) {
+                        if (!displayUser.lastName.isNullOrEmpty()) {
                             UserInfoRow(
                                 label = "Last Name",
-                                value = user.lastName
+                                value = displayUser.lastName
                             )
                         }
 
-                        if (!user.gender.isNullOrEmpty()) {
+                        if (!displayUser.gender.isNullOrEmpty()) {
                             UserInfoRow(
                                 label = "Gender",
-                                value = user.gender
+                                value = displayUser.gender
                             )
                         }
 
-                        if (user.id != null) {
+                        if (displayUser.id != null) {
                             UserInfoRow(
                                 label = "User ID",
-                                value = user.id.toString()
+                                value = displayUser.id.toString()
                             )
                         }
                     }
+
+                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                    // Action Buttons
+                    Spacer(modifier = Modifier.height(DimensUtils.dimenDp(R.dimen.size_8)))
+                    AppButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = if (isLoadingUser) "Refreshing..." else "Refresh User Info",
+                        type = ButtonType.Outlined,
+                        onClick = { viewModel.fetchCurrentUser() },
+                        enabled = !isLoadingUser
+                    )
+
+                    Spacer(modifier = Modifier.height(DimensUtils.dimenDp(R.dimen.size_12)))
+                    AppButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "Logout",
+                        type = ButtonType.Outlined,
+                        onClick = { viewModel.logout() }
+                    )
                 }
             }
         } else {
@@ -188,6 +245,7 @@ fun AccountScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
         }
     }
 }

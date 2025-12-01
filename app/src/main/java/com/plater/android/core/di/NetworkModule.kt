@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.gson.Gson
 import com.plater.android.data.remote.interceptor.AuthInterceptor
 import com.plater.android.data.remote.service.ApiService
+import com.plater.android.data.remote.service.AuthService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,14 +33,18 @@ object NetworkModule {
     @Named("base_url")
     fun provideBaseUrl(): String = BASE_URL
 
-    /**
-     * Builds an [OkHttpClient] with authentication and logging interceptors.
-     * AuthInterceptor is added first to handle token attachment and refresh.
-     * LoggingInterceptor is added second to log requests (including auth headers).
-     *
-     * @param authInterceptor Interceptor that handles token attachment and silent refresh.
-     * @return singleton OkHttp client instance.
-     */
+    @Provides
+    @Singleton
+    fun provideGson(): Gson = Gson()
+
+    @Provides
+    @Singleton
+    fun provideRetrofitBuilder(): Retrofit.Builder {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+    }
+
     @Provides
     @Singleton
     fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
@@ -54,36 +59,26 @@ object NetworkModule {
             .build()
     }
 
-    /**
-     * Creates the application's [Retrofit] instance using the provided client.
-     *
-     * @param okHttpClient configured HTTP client used for requests.
-     * @return Retrofit instance pointing to the JSONPlaceholder API.
-     */
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+    fun provideAuthService(retrofitBuilder: Retrofit.Builder): AuthService {
+        // AuthService doesn't use OkHttpClient with interceptor to avoid circular dependency
+        // when refreshing tokens from within the interceptor
+        return retrofitBuilder
+            .build()
+            .create(AuthService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideApiService(
+        retrofitBuilder: Retrofit.Builder,
+        okHttpClient: OkHttpClient
+    ): ApiService {
+        return retrofitBuilder
             .client(okHttpClient)
             .build()
+            .create(ApiService::class.java)
     }
-
-    /**
-     * Exposes the [ApiService] implementation created by Retrofit.
-     *
-     * @param retrofit Retrofit service generator.
-     * @return typed API definition for endpoints.
-     */
-    @Provides
-    @Singleton
-    fun provideApiService(retrofit: Retrofit): ApiService {
-        return retrofit.create(ApiService::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideGson(): Gson = Gson()
 
 }

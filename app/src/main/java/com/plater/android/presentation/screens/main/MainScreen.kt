@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -15,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.plater.android.R
+import com.plater.android.domain.models.AuthSession
 import com.plater.android.presentation.navigation.AppBottomTabBar
 import com.plater.android.presentation.navigation.BottomNavItem
 import com.plater.android.presentation.navigation.ScreenRoutes
@@ -26,6 +28,8 @@ import com.plater.android.presentation.screens.search.SearchScreen
 
 @Composable
 fun MainScreen(
+    authSession: AuthSession?,
+    onLogout: () -> Unit
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -58,6 +62,13 @@ fun MainScreen(
                 label = "Account"
             )
         )
+    }
+
+    // Watch for auth session changes and navigate to login if session is cleared
+    LaunchedEffect(authSession) {
+        if (authSession == null) {
+            onLogout()
+        }
     }
 
     Scaffold(
