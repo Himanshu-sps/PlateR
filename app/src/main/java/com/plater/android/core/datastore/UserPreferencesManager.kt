@@ -3,7 +3,9 @@ package com.plater.android.core.datastore
 import com.google.gson.Gson
 import com.plater.android.domain.models.AuthSession
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -45,6 +47,36 @@ class UserPreferencesManager @Inject constructor(
 
     suspend fun clearAuthSession() {
         encryptedDataStoreManager.clearSecureKey(KEY_AUTH_SESSION)
+    }
+
+    /**
+     * Synchronously retrieves the access token from the stored auth session.
+     * This method is intended for use in interceptors where blocking is necessary.
+     *
+     * @return The access token if available, null otherwise.
+     */
+    fun getAccessTokenSync(): String? = runBlocking {
+        authSession().first()?.accessToken
+    }
+
+    /**
+     * Synchronously retrieves the refresh token from the stored auth session.
+     * This method is intended for use in interceptors where blocking is necessary.
+     *
+     * @return The refresh token if available, null otherwise.
+     */
+    fun getRefreshTokenSync(): String? = runBlocking {
+        authSession().first()?.refreshToken
+    }
+
+    /**
+     * Synchronously retrieves the full auth session.
+     * This method is intended for use in interceptors where blocking is necessary.
+     *
+     * @return The auth session if available, null otherwise.
+     */
+    fun getAuthSessionSync(): AuthSession? = runBlocking {
+        authSession().first()
     }
 }
 
