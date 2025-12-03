@@ -11,11 +11,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.plater.android.R
 import com.plater.android.core.utils.DimensUtils
+import com.plater.android.presentation.shared.RecipeSharedViewModel
 
 @Composable
 fun SearchScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    recipeSharedViewModel: RecipeSharedViewModel
 ) {
+    // Example: Access shared recipe data from RecipeSharedViewModel
+    // val sharedRecipeState by recipeSharedViewModel.someState.collectAsState()
+    // val searchResults = recipeSharedViewModel.searchResults
+
+    // Example: Call methods on shared ViewModel
+    // recipeSharedViewModel.searchRecipes(query)
+    // recipeSharedViewModel.selectRecipe(recipeId)
+
     Column(
         modifier = modifier
             .fillMaxSize()

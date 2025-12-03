@@ -16,7 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.plater.android.R
-import com.plater.android.domain.models.AuthSession
+import com.plater.android.domain.models.AuthModel
 import com.plater.android.presentation.navigation.AppBottomTabBar
 import com.plater.android.presentation.navigation.BottomNavItem
 import com.plater.android.presentation.navigation.ScreenRoutes
@@ -25,11 +25,13 @@ import com.plater.android.presentation.screens.account.AccountScreen
 import com.plater.android.presentation.screens.bookmark.BookmarkScreen
 import com.plater.android.presentation.screens.home.HomeScreen
 import com.plater.android.presentation.screens.search.SearchScreen
+import com.plater.android.presentation.shared.RecipeSharedViewModel
 
 @Composable
 fun MainScreen(
-    authSession: AuthSession?,
-    onLogout: () -> Unit
+    authSession: AuthModel?,
+    onLogout: () -> Unit,
+    recipeSharedViewModel: RecipeSharedViewModel
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -101,13 +103,13 @@ fun MainScreen(
                 .consumeWindowInsets(innerPadding)
         ) {
             composable<ScreenRoutes.MainSubGraph.HomeScreenRoute> {
-                HomeScreen()
+                HomeScreen(recipeSharedViewModel = recipeSharedViewModel)
             }
             composable<ScreenRoutes.MainSubGraph.SearchScreenRoute> {
-                SearchScreen()
+                SearchScreen(recipeSharedViewModel = recipeSharedViewModel)
             }
             composable<ScreenRoutes.MainSubGraph.BookmarkScreenRoute> {
-                BookmarkScreen()
+                BookmarkScreen(recipeSharedViewModel = recipeSharedViewModel)
             }
             composable<ScreenRoutes.MainSubGraph.AccountScreenRoute> {
                 AccountScreen()

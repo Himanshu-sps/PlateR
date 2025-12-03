@@ -11,10 +11,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.plater.android.R
 import com.plater.android.core.utils.DimensUtils
+import com.plater.android.presentation.shared.RecipeSharedViewModel
 
 @Composable
 fun BookmarkScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    recipeSharedViewModel: RecipeSharedViewModel
 ) {
     Column(
         modifier = modifier

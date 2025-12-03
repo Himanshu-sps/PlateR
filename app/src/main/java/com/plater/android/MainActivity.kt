@@ -14,12 +14,23 @@ import com.plater.android.presentation.uiresources.PlateRTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+/**
+ * Main activity of the PlateR application.
+ * Sets up the Compose UI with edge-to-edge display and navigation graph.
+ *
+ * @property userPreferencesManager Injected UserPreferencesManager for managing user preferences
+ */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var userPreferencesManager: UserPreferencesManager
 
+    /**
+     * Initializes the activity, enables edge-to-edge display, and sets up the Compose UI.
+     *
+     * @param savedInstanceState Previously saved instance state
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

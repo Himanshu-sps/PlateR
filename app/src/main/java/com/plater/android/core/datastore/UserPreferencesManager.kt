@@ -1,7 +1,7 @@
 package com.plater.android.core.datastore
 
 import com.google.gson.Gson
-import com.plater.android.domain.models.AuthSession
+import com.plater.android.domain.models.AuthModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -32,15 +32,15 @@ class UserPreferencesManager @Inject constructor(
         dataStoreManager.writeBoolean(KEY_ONBOARDING_COMPLETED, completed)
     }
 
-    fun authSession(): Flow<AuthSession?> =
+    fun authSession(): Flow<AuthModel?> =
         encryptedDataStoreManager.readSecureString(KEY_AUTH_SESSION)
             .map { stored ->
                 stored?.let {
-                    runCatching { gson.fromJson(it, AuthSession::class.java) }.getOrNull()
+                    runCatching { gson.fromJson(it, AuthModel::class.java) }.getOrNull()
                 }
             }
 
-    suspend fun saveAuthSession(session: AuthSession) {
+    suspend fun saveAuthSession(session: AuthModel) {
         val sessionJson = gson.toJson(session)
         encryptedDataStoreManager.writeSecureString(KEY_AUTH_SESSION, sessionJson)
     }
@@ -75,7 +75,7 @@ class UserPreferencesManager @Inject constructor(
      *
      * @return The auth session if available, null otherwise.
      */
-    fun getAuthSessionSync(): AuthSession? = runBlocking {
+    fun getAuthSessionSync(): AuthModel? = runBlocking {
         authSession().first()
     }
 

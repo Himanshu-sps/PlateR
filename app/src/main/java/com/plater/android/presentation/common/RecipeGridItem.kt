@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -31,17 +31,26 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.plater.android.R
 import com.plater.android.core.utils.DimensUtils
-import com.plater.android.data.remote.dto.response.RecipeDto
+import com.plater.android.domain.models.Recipe
 
+/**
+ * Composable that displays a single recipe item in a grid layout.
+ * Shows recipe image (or default icon), name, cooking time, and bookmark icon.
+ * Designed for use in a 2-column grid layout.
+ *
+ * @param modifier Modifier to apply to the recipe item container
+ * @param recipe The recipe data to display. If null, shows placeholder content
+ */
 @Composable
 fun RecipeGridItem(
-    recipe: RecipeDto? = null
+    modifier: Modifier = Modifier,
+    recipe: Recipe? = null,
 ) {
     val color = MaterialTheme.colorScheme
 
     Box(
-        modifier = Modifier
-            .width(DimensUtils.dimenDp(R.dimen.size_150))
+        modifier = modifier
+            .defaultMinSize(minWidth = DimensUtils.dimenDp(R.dimen.size_150))
             .height(DimensUtils.dimenDp(R.dimen.size_230))
             .background(color = Color.Transparent)
     ) {
@@ -54,7 +63,7 @@ fun RecipeGridItem(
             if (!recipe?.image.isNullOrBlank()) {
                 AsyncImage(
                     modifier = Modifier
-                        .size(DimensUtils.dimenDp(R.dimen.size_100))
+                        .size(DimensUtils.dimenDp(R.dimen.size_80))
                         .clip(CircleShape)
                         .background(
                             color = color.secondary
@@ -66,7 +75,7 @@ fun RecipeGridItem(
             } else {
                 Icon(
                     modifier = Modifier
-                        .size(DimensUtils.dimenDp(R.dimen.size_100))
+                        .size(DimensUtils.dimenDp(R.dimen.size_80))
                         .clip(CircleShape)
                         .background(
                             color = color.primary
@@ -82,7 +91,7 @@ fun RecipeGridItem(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = DimensUtils.dimenDp(R.dimen.size_50))
+                .padding(top = DimensUtils.dimenDp(R.dimen.size_40))
                 .background(
                     color = color.surfaceVariant.copy(alpha = 0.4f),
                     shape = RoundedCornerShape(percent = 10)

@@ -1,7 +1,7 @@
 package com.plater.android.data.mappers
 
 import com.plater.android.data.remote.dto.response.UserDto
-import com.plater.android.domain.models.AuthSession
+import com.plater.android.domain.models.AuthModel
 import com.plater.android.domain.models.User
 
 fun UserDto.toDomain(): User {
@@ -23,8 +23,8 @@ fun User.toDto(): UserDto {
     )
 }
 
-fun UserDto.toAuthSession(): AuthSession {
-    return AuthSession(
+fun UserDto.toAuthSession(): AuthModel {
+    return AuthModel(
         user = this.toDomain(),
         accessToken = this.accessToken,
         refreshToken = this.refreshToken

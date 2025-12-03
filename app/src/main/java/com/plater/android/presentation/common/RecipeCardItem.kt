@@ -37,11 +37,18 @@ import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import com.plater.android.R
 import com.plater.android.core.utils.DimensUtils
-import com.plater.android.data.remote.dto.response.RecipeDto
+import com.plater.android.domain.models.Recipe
 
+/**
+ * Composable that displays a recipe card item in a horizontal list.
+ * Shows recipe image, name, rating, cooking time, difficulty, and tags.
+ * Designed for use in horizontal scrollable lists (e.g., FeaturedSection).
+ *
+ * @param recipe The recipe data to display
+ */
 @Composable
 fun RecipeCardItem(
-    recipe: RecipeDto? = null
+    recipe: Recipe
 ) {
     val color = MaterialTheme.colorScheme
 
@@ -66,14 +73,14 @@ fun RecipeCardItem(
                 )
         ) {
             if (!recipe?.image.isNullOrBlank()) {
-                val imagePainter = rememberAsyncImagePainter(model = recipe.image)
+                val imagePainter = rememberAsyncImagePainter(model = recipe?.image)
                 val imageState = imagePainter.state
 
                 Box(
                     modifier = Modifier
                         .size(DimensUtils.dimenDp(R.dimen.size_60))
                         .clip(CircleShape)
-                        .background(color = color.onSurface)
+                        .background(color = color.primary)
                 ) {
                     Image(
                         painter = imagePainter,
@@ -93,8 +100,8 @@ fun RecipeCardItem(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_chef_cap),
                                 contentDescription = if (imageState is AsyncImagePainter.State.Loading) "Loading" else "Error",
-                                modifier = Modifier.size(DimensUtils.dimenDp(R.dimen.size_24)),
-                                tint = color.surface
+                                modifier = Modifier.size(DimensUtils.dimenDp(R.dimen.size_50)),
+                                tint = color.onPrimary
                             )
                         }
                     }
@@ -102,7 +109,7 @@ fun RecipeCardItem(
             } else {
                 Icon(
                     modifier = Modifier
-                        .size(DimensUtils.dimenDp(R.dimen.size_60))
+                        .size(DimensUtils.dimenDp(R.dimen.size_50))
                         .clip(CircleShape)
                         .background(
                             color = color.primary

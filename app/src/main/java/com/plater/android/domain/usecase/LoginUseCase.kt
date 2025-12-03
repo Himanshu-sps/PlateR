@@ -3,7 +3,7 @@ package com.plater.android.domain.usecase
 import android.content.Context
 import com.plater.android.R
 import com.plater.android.data.remote.ApiResponse
-import com.plater.android.domain.models.AuthSession
+import com.plater.android.domain.models.AuthModel
 import com.plater.android.domain.models.ResultResource
 import com.plater.android.domain.repository.UserRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -22,12 +22,12 @@ class LoginUseCase @Inject constructor(
      * Attempts to log in with the provided credentials and emits loading, success,
      * or error states that the presentation layer can observe.
      */
-    operator fun invoke(username: String, password: String): Flow<ResultResource<AuthSession>> =
+    operator fun invoke(username: String, password: String): Flow<ResultResource<AuthModel>> =
         flow {
             emit(ResultResource.Loading)
 
             try {
-                val apiResponse: ApiResponse<AuthSession> = userRepository.login(
+                val apiResponse: ApiResponse<AuthModel> = userRepository.login(
                     username = username,
                     password = password
                 )

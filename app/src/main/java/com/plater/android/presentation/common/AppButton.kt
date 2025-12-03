@@ -28,13 +28,42 @@ import androidx.compose.ui.unit.Dp
 import com.plater.android.R
 import com.plater.android.core.utils.DimensUtils
 
+/**
+ * Enum representing different button styles available in the app.
+ */
 enum class ButtonType {
+    /** Primary button with filled background */
     Primary,
+
+    /** Outlined button with border and transparent background */
     Outlined,
+
+    /** Text-only button with no background or border */
     Text,
+
+    /** Icon-only button with circular background */
     IconOnly
 }
 
+/**
+ * Reusable button component that supports multiple styles and configurations.
+ * Can display text, icons, or both, with customizable colors and styling.
+ *
+ * @param modifier Modifier to apply to the button
+ * @param text Optional text to display on the button
+ * @param type The button style type (Primary, Outlined, Text, or IconOnly)
+ * @param leftIcon Optional icon to display on the left side of the text
+ * @param rightIcon Optional icon to display on the right side of the text
+ * @param onlyIcon Optional icon for IconOnly button type
+ * @param enabled Whether the button is enabled and clickable
+ * @param iconSize Size of the icons
+ * @param primaryColor Primary color for the button
+ * @param cornerRadiusPercent Corner radius as percentage (0-100)
+ * @param textStyle Text style for the button text
+ * @param horizontalPadding Horizontal padding inside the button
+ * @param verticalPadding Vertical padding inside the button
+ * @param onClick Callback invoked when the button is clicked
+ */
 @Composable
 fun AppButton(
     modifier: Modifier = Modifier,
@@ -50,6 +79,8 @@ fun AppButton(
     textStyle: TextStyle = MaterialTheme.typography.labelMedium.copy(
         fontWeight = FontWeight.SemiBold
     ),
+    horizontalPadding: Dp = DimensUtils.dimenDp(R.dimen.size_6),
+    verticalPadding: Dp = DimensUtils.dimenDp(R.dimen.size_8),
     onClick: () -> Unit = {}
 ) {
 
@@ -66,13 +97,13 @@ fun AppButton(
         }
 
         ButtonType.Outlined -> {
-            bgColor = Color.Companion.Transparent
+            bgColor = Color.Transparent
             contentColor = if (enabled) primaryColor else primaryColor.copy(alpha = 0.4f)
             border = BorderStroke(DimensUtils.dimenDp(R.dimen.size_1), contentColor)
         }
 
         ButtonType.Text -> {
-            bgColor = Color.Companion.Transparent
+            bgColor = Color.Transparent
             contentColor = if (enabled) primaryColor else primaryColor.copy(alpha = 0.4f)
             border = null
         }
@@ -89,22 +120,22 @@ fun AppButton(
             .clip(RoundedCornerShape(percent = cornerRadiusPercent))
             .background(bgColor)
             .then(
-                if (border != null) Modifier.Companion.border(
+                if (border != null) Modifier.border(
                     border,
                     RoundedCornerShape(percent = cornerRadiusPercent)
                 )
-                else Modifier.Companion
+                else Modifier
             )
             .clickable(enabled = enabled) { onClick() }
             .padding(
-                horizontal = DimensUtils.dimenDp(R.dimen.size_6),
-                vertical = DimensUtils.dimenDp(R.dimen.size_8),
+                horizontal = horizontalPadding,
+                vertical = verticalPadding
             ),
-        contentAlignment = Alignment.Companion.Center
+        contentAlignment = Alignment.Center
     ) {
 
         Row(
-            verticalAlignment = Alignment.Companion.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
 
@@ -113,7 +144,7 @@ fun AppButton(
                     imageVector = onlyIcon,
                     contentDescription = null,
                     tint = contentColor,
-                    modifier = Modifier.Companion.size(iconSize)
+                    modifier = Modifier.size(iconSize)
                 )
                 return@Box
             }
@@ -124,7 +155,7 @@ fun AppButton(
                     imageVector = leftIcon,
                     contentDescription = null,
                     tint = contentColor,
-                    modifier = Modifier.Companion.size(iconSize)
+                    modifier = Modifier.size(iconSize)
                 )
                 Spacer(modifier = Modifier.width(DimensUtils.dimenDp(R.dimen.size_8)))
             }
@@ -134,7 +165,7 @@ fun AppButton(
                 val finalStyle = textStyle.merge(
                     TextStyle(
                         color = contentColor,
-                        fontWeight = FontWeight.Companion.SemiBold
+                        fontWeight = FontWeight.SemiBold
                     )
                 )
 
@@ -152,7 +183,7 @@ fun AppButton(
                     painter = rightIcon,
                     contentDescription = null,
                     tint = contentColor,
-                    modifier = Modifier.Companion.size(iconSize)
+                    modifier = Modifier.size(iconSize)
                 )
             }
         }

@@ -8,7 +8,7 @@ import com.plater.android.data.remote.ApiResponse
 import com.plater.android.data.remote.dto.request.LoginRequest
 import com.plater.android.data.remote.service.ApiService
 import com.plater.android.data.remote.service.AuthService
-import com.plater.android.domain.models.AuthSession
+import com.plater.android.domain.models.AuthModel
 import com.plater.android.domain.models.User
 import com.plater.android.domain.repository.UserRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -23,7 +23,7 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun login(
         username: String,
         password: String
-    ): ApiResponse<AuthSession> {
+    ): ApiResponse<AuthModel> {
         return try {
             val loginRequest = LoginRequest(username = username, password = password)
             val userDto = authService.login(loginRequest)

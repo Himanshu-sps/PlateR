@@ -3,7 +3,7 @@ package com.plater.android.presentation.screens.account
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.plater.android.core.datastore.UserPreferencesManager
-import com.plater.android.domain.models.AuthSession
+import com.plater.android.domain.models.AuthModel
 import com.plater.android.domain.models.ResultResource
 import com.plater.android.domain.models.User
 import com.plater.android.domain.usecase.GetCurrentUserUseCase
@@ -25,8 +25,8 @@ class AccountViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase
 ) : ViewModel() {
 
-    private val _userState = MutableStateFlow<AuthSession?>(null)
-    val userState: StateFlow<AuthSession?> = _userState.asStateFlow()
+    private val _userState = MutableStateFlow<AuthModel?>(null)
+    val userState: StateFlow<AuthModel?> = _userState.asStateFlow()
 
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
