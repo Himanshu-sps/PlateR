@@ -8,15 +8,18 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 import com.plater.android.core.datastore.UserPreferencesManager
-import com.plater.android.domain.models.AuthSession
+import com.plater.android.domain.models.AuthModel
 import com.plater.android.presentation.screens.auth.LoginScreen
-import com.plater.android.presentation.screens.home.HomeScreen
+import com.plater.android.presentation.screens.main.MainScreen
 import com.plater.android.presentation.screens.onboarding.OnboardingScreen
 import com.plater.android.presentation.screens.splash.SplashScreen
+import com.plater.android.presentation.shared.RecipeSharedViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -41,7 +44,7 @@ fun PlateRNavGraph(
     }
 
     // Encrypted auth session sourced from secure DataStore storage.
-    val authSession by produceState<AuthSession?>(initialValue = null, userPreferencesManager) {
+    val authSession by produceState<AuthModel?>(initialValue = null, userPreferencesManager) {
         userPreferencesManager.authSession().collect { session ->
             value = session
         }
@@ -54,24 +57,43 @@ fun PlateRNavGraph(
         startDestination = ScreenRoutes.SplashScreenRoute,
         modifier = modifier
     ) {
+
         composable<ScreenRoutes.SplashScreenRoute> {
             SplashScreen()
 
             LaunchedEffect(onboardingCompleted, authSession) {
                 val completed = onboardingCompleted
                 val session = authSession
-                if (!navigationHandled.value && completed != null) {
-                    delay(SPLASH_DELAY_MS)
-                    val destination = when {
-                        session != null -> ScreenRoutes.HomeScreenRoute
-                        completed -> ScreenRoutes.AuthScreenRoute
-                        else -> ScreenRoutes.OnboardingScreenRoute
-                    }
 
-                    navigationHandled.value = true
-                    navController.navigate(destination) {
-                        popUpTo<ScreenRoutes.SplashScreenRoute> {
-                            inclusive = true
+                // Only navigate from splash if we're actually on the splash screen
+                // This prevents navigation when activity is recreated (e.g., theme change)
+                // Check if back stack has more than just splash (meaning we've navigated away)
+                val backStackEntry = navController.currentBackStackEntry
+                val hasNavigatedAway = backStackEntry?.destination?.route?.let { route ->
+                    !route.contains("SplashScreenRoute", ignoreCase = true)
+                } ?: false
+
+                if (!navigationHandled.value && completed != null && !hasNavigatedAway) {
+                    delay(SPLASH_DELAY_MS)
+
+                    // Double-check we're still on splash after delay
+                    val stillOnSplash =
+                        navController.currentBackStackEntry?.destination?.route?.let { route ->
+                            route.contains("SplashScreenRoute", ignoreCase = true)
+                        } ?: false
+
+                    if (stillOnSplash) {
+                        val destination = when {
+                            session != null -> ScreenRoutes.MainSubGraph.MainGraphRoute
+                            completed -> ScreenRoutes.AuthSubGraph.AuthGraphRoute
+                            else -> ScreenRoutes.OnboardingScreenRoute
+                        }
+
+                        navigationHandled.value = true
+                        navController.navigate(destination) {
+                            popUpTo<ScreenRoutes.SplashScreenRoute> {
+                                inclusive = true
+                            }
                         }
                     }
                 }
@@ -84,35 +106,46 @@ fun PlateRNavGraph(
                     coroutineScope.launch {
                         userPreferencesManager.setOnboardingCompleted(completed = true)
                     }
-                    navController.navigate(ScreenRoutes.AuthScreenRoute) {
+                    navController.navigate(ScreenRoutes.AuthSubGraph.AuthGraphRoute) {
                         popUpTo<ScreenRoutes.OnboardingScreenRoute> { inclusive = true }
                     }
                 }
             )
         }
 
-        composable<ScreenRoutes.AuthScreenRoute> {
-            LoginScreen(
-                onSignInSuccess = {
-                    navController.navigate(ScreenRoutes.HomeScreenRoute) {
-                        popUpTo<ScreenRoutes.AuthScreenRoute> { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        composable<ScreenRoutes.HomeScreenRoute> {
-            HomeScreen(
-                onLogoutClick = {
-                    coroutineScope.launch {
-                        userPreferencesManager.clearAuthSession()
-                        navController.navigate(ScreenRoutes.AuthScreenRoute) {
-                            popUpTo<ScreenRoutes.HomeScreenRoute> { inclusive = true }
+        navigation<ScreenRoutes.AuthSubGraph.AuthGraphRoute>(
+            startDestination = ScreenRoutes.AuthSubGraph.LoginScreenRoute
+        ) {
+            composable<ScreenRoutes.AuthSubGraph.LoginScreenRoute> {
+                LoginScreen(
+                    onSignInSuccess = {
+                        navController.navigate(ScreenRoutes.MainSubGraph.MainGraphRoute) {
+                            popUpTo<ScreenRoutes.AuthSubGraph.AuthGraphRoute> { inclusive = true }
                         }
                     }
-                }
-            )
+                )
+            }
         }
+
+        navigation<ScreenRoutes.MainSubGraph.MainGraphRoute>(
+            startDestination = ScreenRoutes.MainSubGraph.MainScreenRoute
+        ) {
+            composable<ScreenRoutes.MainSubGraph.MainScreenRoute> {
+                val recipeSharedViewModel: RecipeSharedViewModel = hiltViewModel()
+                MainScreen(
+                    authSession = authSession,
+                    onLogout = {
+                        navController.navigate(ScreenRoutes.AuthSubGraph.AuthGraphRoute) {
+                            popUpTo<ScreenRoutes.MainSubGraph.MainGraphRoute> {
+                                inclusive = true
+                            }
+                        }
+                    },
+                    recipeSharedViewModel = recipeSharedViewModel
+                )
+            }
+        }
+
     }
 }
 

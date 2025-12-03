@@ -8,5 +8,5 @@ data class LoginRequest(
     @SerializedName("password")
     val password: String,
     @SerializedName("expiresInMins")
-    val expiresInMins: Int = 2
+    val expiresInMins: Int = 30
 )

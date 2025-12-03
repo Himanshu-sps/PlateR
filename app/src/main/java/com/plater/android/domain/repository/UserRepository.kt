@@ -1,7 +1,8 @@
 package com.plater.android.domain.repository
 
 import com.plater.android.data.remote.ApiResponse
-import com.plater.android.domain.models.AuthSession
+import com.plater.android.domain.models.AuthModel
+import com.plater.android.domain.models.User
 
 /**
  * Abstraction over remote/local data sources that deal with authentication APIs.
@@ -14,6 +15,11 @@ interface UserRepository {
     suspend fun login(
         username: String,
         password: String
-    ): ApiResponse<AuthSession>
+    ): ApiResponse<AuthModel>
+
+    /**
+     * Gets the current authenticated user's information.
+     */
+    suspend fun getCurrentUser(): ApiResponse<User>
 
 }
